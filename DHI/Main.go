@@ -60,6 +60,7 @@ func    main () {
 	} ( )
 	/***3***/
 	xb05 := make (chan bool , 1)
+	
 	for _ , xc10 := range DaemonRegister {
 		/***1***/
 		if xc10.Program == nil {

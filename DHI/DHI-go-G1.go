@@ -17,34 +17,8 @@ import  "time"
 // Interface manager
 func    DHI1 (Clap <-chan map[string]string, Flap chan <- map[string]string) (E error) {
 	/***1***/
-	xb01 := map[string]string {}
-	xb05 := []*http.Server {}
-	if DHI0_Addr1 != ""  {
-		xc05 := &http.Server { Addr: DHI0_Addr1, Handler: &DHI2 {} }
-		xb05  = append (xb05 , xc05)
-	}
-	if DHI0_Addr2 != ""  {
-		xc05 := &http.Server { Addr: DHI0_Addr2, Handler: &DHI2 {} }
-		xb05  = append (xb05 , xc05)
-	}
-	if len (xb05) < 1 {
-		xb01["StartupCode"] = "500"
-		xb01["StartupNote"] =  fmt.Sprintf (`HTTP and HTTPS addresses not configured`)
-		Flap <- xb01
-		return
-	}
-	if DHI0_RedirectHTTP&&
-	   regexp.MustCompile(`^https\:\/\/.+$`).MatchString(DHI0_RedirectDestination) ==
-	   false{
-		xb01["StartupCode"] = "500"
-		xb01["StartupNote"] =  fmt.Sprintf (
-			`Conf parameter DHI0_RedirectDestination not valid`,
-		)
-		Flap <- xb01
-		return
-	}
-	xb01["StartupCode"] = "200"
-	Flap <- xb01
+	return DHI1ValidateCreateServers(Flap)
+	
 	/***2***/
 	xb10 := false
 	xb15 := 0
@@ -116,6 +90,50 @@ func    DHI1 (Clap <-chan map[string]string, Flap chan <- map[string]string) (E 
 		time.Sleep (time.Millisecond*100)
 	}
 }
+
+func DHI1ValidateCreateServers(Flap chan<- map[string]string) (E error) {
+	xb01 := map[string]string {}
+	xb05 := []*http.Server {}
+
+	// Server 1
+	if DHI0_Addr1 != ""  {
+		xc05 := &http.Server { Addr: DHI0_Addr1, Handler: &DHI2 {} }
+		xb05  = append (xb05 , xc05)
+	}
+
+	// Server 2
+	if DHI0_Addr2 != ""  {
+		xc05 := &http.Server { Addr: DHI0_Addr2, Handler: &DHI2 {} }
+		xb05  = append (xb05 , xc05)
+	}
+
+	// No servers configured
+	if len (xb05) < 1 {
+		xb01["StartupCode"] = "500"
+		xb01["StartupNote"] =  fmt.Sprintf (`HTTP and HTTPS addresses not configured`)
+		Flap <- xb01
+		return
+	}
+
+	// Redirect Config Check
+	if DHI0_RedirectHTTP&&
+	   regexp.MustCompile(`^https\:\/\/.+$`).MatchString(DHI0_RedirectDestination) ==
+	   false{
+		xb01["StartupCode"] = "500"
+		xb01["StartupNote"] =  fmt.Sprintf (
+			`Conf parameter DHI0_RedirectDestination not valid`,
+		)
+		Flap <- xb01
+		return
+	}
+
+	// Successful configuration (*)
+	xb01["StartupCode"] = "200"
+	xb01["StartupNote"] = fmt.Sprintf(`OK`)
+	Flap <- xb01
+	return
+}
+
 // Panic manager
 type    DHI2 struct {   }
 func(d *DHI2)ServeHTTP (R http.ResponseWriter, r *http.Request) {
