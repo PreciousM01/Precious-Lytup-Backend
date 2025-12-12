@@ -17,7 +17,10 @@ import  "time"
 // Interface manager
 func    DHI1 (Clap <-chan map[string]string, Flap chan <- map[string]string) (E error) {
 	/***1***/
-	return DHI1ValidateCreateServers(Flap)
+	xb05 := []*http.Server {}
+	if err := DHI1ValidateCreateServers(&xb05, Flap); err != nil {
+		return err
+	}
 	
 	/***2***/
 	xb10 := false
@@ -32,43 +35,9 @@ func    DHI1 (Clap <-chan map[string]string, Flap chan <- map[string]string) (E 
 		xc15 := bytes.NewBuffer ([]byte {})
 		xc10.ErrorLog = log.New (xc15 , "", log.Lshortfile)
 		if xc10.Addr == DHI0_Addr1 {
-			go func ( ) {
-				defer func (  ) {
-					xb20.Lock ( ); xb15 = xb15 + 1; xb20.Unlock ( )
-				} ( )
-				time.Sleep (time.Millisecond*100)
-				xe01 := fmt.Sprintf (
-					`HTTP(-): %s`, strings.Split (xc10.Addr, ":")[1],
-				)
-				Output_Logg ("OUT", "DHI1", xe01)
-				xe05 := xc10.ListenAndServe ( )
-				if xe05 != nil && xb10 == false {
-					E= errors.New (fmt.Sprintf (
-						`HTTP(-) interface listener unexpectedly shutdown [%s]`, xe05.Error (),
-					))
-					return
-				}
-			}  (  )
+			  DHI1StartServer(xc10, `HTTP`, &xb15, xb20, &xb10, &E)
 		}  else {
-			go func ( ) {
-				defer func (  ) {
-					xb20.Lock ( ); xb15 = xb15 + 1; xb20.Unlock ( )
-				} ( )
-				time.Sleep (time.Millisecond*150)
-				xe01 := fmt.Sprintf (
-					`HTTP(S): %s`, strings.Split (xc10.Addr, ":")[1],
-				)
-				Output_Logg ("OUT", "DHI1", xe01)
-				xe05 := xc10.ListenAndServeTLS  (
-					DHI0_Addr2_Crt, DHI0_Addr2_Key,
-				)
-				if xe05 != nil && xb10 == false {
-					E= errors.New (fmt.Sprintf (
-						`HTTP(S) interface listener unexpectedly shutdown [%s]`, xe05.Error (),
-					))
-					return
-				}
-			}  (  )
+			DHI1StartServer(xc10, `HTTPS`, &xb15, xb20, &xb10, &E)
 		}
 	}
 	/***3***/
@@ -91,7 +60,7 @@ func    DHI1 (Clap <-chan map[string]string, Flap chan <- map[string]string) (E 
 	}
 }
 
-func DHI1ValidateCreateServers(Flap chan<- map[string]string) (E error) {
+func DHI1ValidateCreateServers(srv *[]*http.Server, Flap chan<- map[string]string) (E error) {
 	xb01 := map[string]string {}
 	xb05 := []*http.Server {}
 
@@ -132,6 +101,42 @@ func DHI1ValidateCreateServers(Flap chan<- map[string]string) (E error) {
 	xb01["StartupNote"] = fmt.Sprintf(`OK`)
 	Flap <- xb01
 	return
+}
+
+func DHI1StartServer (srv *http.Server, label string, serverCount *int, mutex *sync.Mutex, shutdownFlag *bool, E *error) {
+
+	go func ( ) {
+				// Update Server count
+				defer func (  ) {
+					mutex.Lock ( )
+					*serverCount = *serverCount + 1
+					mutex.Unlock ( )
+				} ( )
+
+				time.Sleep (time.Millisecond*100)
+
+				xb05 := fmt.Sprintf (
+					`%s interface listener started on %s`, label, srv.Addr)
+
+				Output_Logg ("OUT", "DHI1", xb05)
+				
+				// Starting Server
+				var xc05 error
+				if label == "HTTPS" {
+					xc05 = srv.ListenAndServeTLS (DHI0_Addr2_Crt, DHI0_Addr2_Key)
+				} else {
+					xc05 = srv.ListenAndServe ( )
+				}
+
+				// Error Handling
+				mutex.Lock()
+				if xc05 != nil && !(*shutdownFlag) {
+					*E = errors.New (fmt.Sprintf (
+						`%s interface listener unexpectedly shutdown [%s]`, label, xc05.Error (),
+					))
+				}
+				mutex.Unlock()
+			} ( )
 }
 
 // Panic manager
