@@ -14,6 +14,8 @@ import  "strings"
 import  "time"
 
 func    main () {
+	//Creating a new DHI object
+	d := NewDHI()
 	/***1***/
 	Output_Logg ("OUT", "Main", "PROJECT: Starting up")
 	if DaemonRegister == nil || len(DaemonRegister) == 0 {
