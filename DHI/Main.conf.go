@@ -3,7 +3,7 @@ package main
 import  "syscall"
 
 var     DaemonRegister []*Daemon = [ ]*Daemon {
-	&Daemon { Name: "DHI0", Program: DHI1 },
+	&Daemon { Name: "DHI0" },
 }
 var     SupportedShutdownSignal []syscall.Signal = []syscall.Signal {
 	syscall.SIGHUP ,

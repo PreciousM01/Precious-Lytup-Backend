@@ -63,7 +63,7 @@ func NewDHI() *DHI{
 }
 
 //Starting the DHI Interface manager
-func (d *DHI) Start (Clap <-chan map[string]string, Flap chan<- map[string]string) (E error) {
+func (d *DHI) DHIStart (Clap <-chan map[string]string, Flap chan<- map[string]string) (E error) {
 	/***1***/
 	if err := d.DHI1ValidateCreateServers(Flap); err != nil {
 		return err
