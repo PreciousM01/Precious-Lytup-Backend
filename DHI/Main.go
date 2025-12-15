@@ -48,7 +48,7 @@ func    main () {
 	go manager.Supervise(manager.SignalCh, manager.StatusCh)
 
 	// Wait until all goroutines have shutdown
-	select {}
+	<- manager.SignalCh
 }
 
 func (m *DaemonManager) DaemonShutDown() {
@@ -211,8 +211,8 @@ func (m *DaemonManager) Supervise(SigChannel chan os.Signal, status chan bool) {
 					}
 				}
 			}
-			case _= <- SigChannel:{
-				fmt.Println ("")
+			case <- SigChannel:{
+				Output_Logg("OUT", "Manager", "Shutdown signal received")
 				return
 			}
 		}
