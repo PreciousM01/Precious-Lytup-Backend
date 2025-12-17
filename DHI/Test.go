@@ -2,16 +2,13 @@ package main
 
 import  "fmt"
 import  "net/http"
-
 func    init (   ) {
 	DHI0_Addr1 = ":8080"
 	DHI0_Addr2 = ":8443"
 	DHI0_RedirectDestination = "https://localhost:8443"
 	DHI0_SPRegister= [ ]*DHI0_SP {
-		&DHI0_SP { Code: "sr05", Program: SP01 },
-		&DHI0_SP { Code: "sr10", Program: SP01 },
-		&DHI0_SP { Code: "sr15", Program: SP01 },
-		&DHI0_SP { Code: "sr20", Program: SP01 },
+		{ Code: "weather.forecast", Program: SPWeatherForecast },
+
 	}
 }
 func    SP01 (R *http.Request, r string, s map[string]any) (C int, N string, Y any) {

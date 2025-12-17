@@ -15,6 +15,10 @@ import  "time"
 import  "syscall"
 
 
+/* Initialize Daemoncore and start the application
+ * Creates a DHI instance, assigns it to be the program of the daemon
+ * Initialize daemon manager, starts execution and blocks unti an OS shutdown signal is received which shuts down the application.
+*/
 func    main () {
 	
 	/***1***/
@@ -51,6 +55,9 @@ func    main () {
 	<- manager.SignalCh
 }
 
+/* Gracefully stops all running daemons. 
+ * Ensures reseources are released in a dependency-safe order by shutting down in a reverse order
+*/
 func (m *DaemonManager) DaemonShutDown() {
 		xc05 := m.Daemons
 		slices.Reverse(xc05)
@@ -92,6 +99,9 @@ func (m *DaemonManager) DaemonShutDown() {
 		}
 	} ;
 
+/* Starts all registered daemons independently. Initializes communication (flap, clap) for each daemon.
+ * Launches daemon execution  and monitors for startup success or failure
+*/
 func (m *DaemonManager) DaemonStartUp() {
 		for _ , xc10 := range m.Daemons {
 		/***1***/ // Daemon has no program running
@@ -121,6 +131,12 @@ func (m *DaemonManager) DaemonStartUp() {
 		
 	}
 	}
+
+/* Executes a single daemon program. 
+ * Takes a daemon instance and a status channel as arguments.
+ * Runs the daemon program, captures panics safely, updates state, and sends the execution status to the status channel.
+ * The status channel is used to signal the completion of the daemon execution (true-> done, false -> not done)
+*/
 
 func (m *DaemonManager ) DaemonRun (daemon *Daemon, status chan bool) {
 
@@ -152,7 +168,8 @@ func (m *DaemonManager ) DaemonRun (daemon *Daemon, status chan bool) {
 	status <- true
 } 
 
-// Status = true if it is done, and false otherwise
+/* Helper function for DaemonStartUp. Handles Errors and signals during startup that indicate success or failure.
+*/
 func (m *DaemonManager) DaemonShutDownSignal(daemon *Daemon, status chan bool) {
 	if daemon.StartupGrace != 0  {
 			go func (  ) {
@@ -184,7 +201,11 @@ func (m *DaemonManager) DaemonShutDownSignal(daemon *Daemon, status chan bool) {
 		
 	}
 
-// Supervise the Daemon cores and keep them alive
+/* Monitors all daemons and  listens for OS shutdown signals.
+ * Takes a signal channel and a status channel as arguments.
+ * Waits for shutdown signals and initiates the shutdown process for all running daemons.
+ * The status channel is used to signal the completion of the shutdown process
+*/
 func (m *DaemonManager) Supervise(SigChannel chan os.Signal, status chan bool) { 
 	for _ , xc10 := range SupportedShutdownSignal { signal.Notify (SigChannel , xc10) }
 	for     {
@@ -244,6 +265,9 @@ func    Output_Logg (Type, Source, Output string) {
 	}
 }
 
+/* Coordinates the lifecycle of all daemons. References shared  communication channels and supported OS shutdown signals
+ * Controls startup, supervision, error handling, and graceful shutdown
+*/
 type DaemonManager struct {
 	Daemons 		[]*Daemon
 	SignalCh 		chan os.Signal

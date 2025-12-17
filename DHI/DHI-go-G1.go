@@ -38,7 +38,7 @@ type DHI struct {
 	Mutex        sync.Mutex // protects ShutdownFlag
 }
 
-// Create a new DHI instance
+// Create a new DHI instance, and initialize it.
 func NewDHI() *DHI{
 	return &DHI{
 	Addr1:                DHI0_Addr1,
@@ -62,7 +62,10 @@ func NewDHI() *DHI{
 	}
 }
 
-//Starting the DHI Interface manager
+/* Start the DHI interface
+ * Takes Clap and Flap channels as input
+ * Returns an error if any
+*/
 func (d *DHI) DHIStart (Clap <-chan map[string]string, Flap chan<- map[string]string) (E error) {
 	/***1***/
 	if err := d.DHI1ValidateCreateServers(Flap); err != nil {
@@ -87,6 +90,10 @@ func (d *DHI) DHIStart (Clap <-chan map[string]string, Flap chan<- map[string]st
 	return d.DHI1_WaitForShutdown(Clap, &xb05, &E)
 }
 
+/* Create and configure servers.
+ * Takes Flap channel as input
+ * Returns an error if any
+*/
 func (d *DHI) DHI1ValidateCreateServers(Flap chan<- map[string]string) (E error) {
 	xb01 := map[string]string{}
 
@@ -129,6 +136,9 @@ func (d *DHI) DHI1ValidateCreateServers(Flap chan<- map[string]string) (E error)
 	return
 }
 
+/* Starts servers and establish communication channel
+ * Takes server, label, serverCount and E as input
+ */
 func (d *DHI) DHI1StartServer(srv *http.Server, label string, serverCount *int, E *error) {
 
 	go func() {
@@ -165,6 +175,10 @@ func (d *DHI) DHI1StartServer(srv *http.Server, label string, serverCount *int, 
 	}()
 }
 
+/* Keeps the interface running until it is told to stop or a failure occurs. Closes servers when shutddown is requested.
+ * Takes Clap, serverCount and E as input
+ * Returns an error if any, else returns nil
+ */
 func (d *DHI) DHI1_WaitForShutdown(Clap <-chan map[string]string, serverCount *int, E *error) error {
 
 	for {
@@ -201,7 +215,9 @@ func (d *DHI) DHI1_WaitForShutdown(Clap <-chan map[string]string, serverCount *i
 	}
 }
 
-// Panic manager
+/* Http request handler for the interface servers (Panic manager). 
+ * Takes http.ResponseWriter and *http.Request as input
+ */
 func (d *DHI) ServeHTTP(R http.ResponseWriter, r *http.Request) {
 	/***1***/
 	if r.TLS == nil && d.RedirectHTTP {
@@ -282,7 +298,10 @@ func (d *DHI) ServeHTTP(R http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Router
+/* Selects the correct service provider for a request and executes it (Router).
+ * Takes as input the request, the service provider ID and the seed.
+ * Returns the response code, note and yield
+*/
 func (d *DHI) Route(r *http.Request, s *DHI0_Request, R http.ResponseWriter) (
 	C int, N string, Y any,
 ) {
@@ -316,3 +335,5 @@ type DHI0_SP struct {
 	Code    string
 	Program func(*http.Request, string, map[string]any) (int, string, any)
 }
+
+
