@@ -99,7 +99,7 @@ func (c *WeatherCache) SetWithTTL(key string, data any, ttl time.Duration) {
 	}
 }
 
-// 6. Clean up expired entries (run periodically)
+// 6. Clean up expired entries
 func (c *WeatherCache) CleanExpired() {
 	c.Mutex.Lock()
 	defer c.Mutex.Unlock()
@@ -133,13 +133,11 @@ func (c *WeatherCache) Save() error {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
 
-	// Create a serializable version of the cache
 	data, err := json.MarshalIndent(c.Store, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal cache: %w", err)
 	}
 
-	// Write to file
 	if err := os.WriteFile(c.FilePath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write cache file: %w", err)
 	}
@@ -153,19 +151,16 @@ func (c *WeatherCache) Load() error {
 	c.Mutex.Lock()
 	defer c.Mutex.Unlock()
 
-	// Check if file exists
 	if _, err := os.Stat(c.FilePath); os.IsNotExist(err) {
 		Output_Logg("OUT", "Cache", "No existing cache file found. Starting with empty cache.")
 		return nil
 	}
 
-	// Read file
 	data, err := os.ReadFile(c.FilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read cache file: %w", err)
 	}
 
-	// Unmarshal into temporary map
 	var tempStore map[string]CacheEntry
 	if err := json.Unmarshal(data, &tempStore); err != nil {
 		return fmt.Errorf("failed to unmarshal cache: %w", err)
