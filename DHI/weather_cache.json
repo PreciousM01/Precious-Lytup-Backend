@@ -1,0 +1,21 @@
+{
+  "fb9de5356930145231ae19cda90c5ad56478fd5cb4c3f755c118763a548177b8": {
+    "data": {
+      "city": "Lagos",
+      "current": {
+        "apparent_temperature": 34.8,
+        "cloud_cover": 56,
+        "precipitation": 0,
+        "relative_humidity_2m": 73,
+        "temperature_2m": 29.8,
+        "wind_speed_10m": 8.6
+      },
+      "location": {
+        "latitude": 6.45407,
+        "longitude": 3.39467
+      }
+    },
+    "expires_at": "2025-12-19T12:16:20.5854352-05:00",
+    "stored_at": "2025-12-19T11:46:20.5854352-05:00"
+  }
+}

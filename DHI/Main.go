@@ -23,10 +23,16 @@ func    main () {
 	
 	/***1***/
 	Output_Logg ("OUT", "Main", "PROJECT: Starting up")
+
 	// If there are no daemons running, shut down.
 	if DaemonRegister == nil{
 		Output_Logg ("OUT", "Main", "PROJECT: No Daemon(s) to run. Shutting down now")
 		return
+	}
+
+	// Load persistent cache on startup
+	if err := GlobalWeatherCache.Load(); err != nil {
+		Output_Logg("ERR", "Main", fmt.Sprintf("Failed to load cache: %s", err.Error()))
 	}
 
 	//Creating a new DHI object
@@ -43,12 +49,24 @@ func    main () {
 	}
 
 	/***2***/
-	defer manager.DaemonShutDown()
+	defer func() {
+		Output_Logg("OUT", "Main", "PROJECT: Initiating graceful shutdown")
+		
+		// Save cache before shutting down daemons
+		if err := GlobalWeatherCache.Save(); err != nil {
+			Output_Logg("ERR", "Main", fmt.Sprintf("Failed to save cache: %s", err.Error()))
+		}
+		
+		// Shutdown daemons
+		manager.DaemonShutDown()
+		
+		Output_Logg("OUT", "Main", "PROJECT: Shutdown complete")
+	}()
 
-	/***5***/
+	/***4***/
 	go manager.DaemonStartUp()
 	
-	/***4***/
+	/***5***/
 	go manager.Supervise(manager.SignalCh, manager.StatusCh)
 
 	// Wait until all goroutines have shutdown
